@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { computeQuote, type QuoteInput, DiscountType } from '@studio-morph/shared-pricing';
+import { computeQuote, type QuoteInput } from '@studio-morph/shared-pricing';
 
 const router = Router();
 
