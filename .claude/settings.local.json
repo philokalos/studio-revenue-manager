@@ -18,7 +18,9 @@
       "Bash(npm install:*)",
       "Bash(gh issue list:*)",
       "Bash(npm run:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": [],
     "ask": []
