@@ -1,28 +1,28 @@
 import { Router } from 'express';
+import quoteRouter from './quote';
+import reservationRouter from './reservation';
+import invoiceRouter from './invoice';
 
 const router = Router();
 
 // API version info
-router.get('/', (req, res) => {
+router.get('/', (_req, res) => {
   res.json({
     name: 'Studio Revenue Manager API',
     version: '1.0.0',
     status: 'active',
     endpoints: {
       health: '/health',
-      api: '/api',
+      quote: '/api/quote',
+      reservation: '/api/reservation',
+      invoice: '/api/invoice',
     },
   });
 });
 
-// Future route imports will be added here
-// Example:
-// import studiosRouter from './studios';
-// import projectsRouter from './projects';
-// import revenueRouter from './revenue';
-//
-// router.use('/studios', studiosRouter);
-// router.use('/projects', projectsRouter);
-// router.use('/revenue', revenueRouter);
+// Route imports
+router.use('/quote', quoteRouter);
+router.use('/reservation', reservationRouter);
+router.use('/invoice', invoiceRouter);
 
 export default router;

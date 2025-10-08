@@ -51,4 +51,12 @@ export const closePool = async () => {
   console.log('🔌 Database pool closed');
 };
 
+// Export as db for convenience
+export const db = {
+  query,
+  connect: getClient,
+  pool,
+  close: closePool
+};
+
 export default pool;
