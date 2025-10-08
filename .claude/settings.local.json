@@ -14,7 +14,11 @@
       "Bash(npm run type-check:*)",
       "Bash(npm test)",
       "Bash(pkill:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(npm install:*)",
+      "Bash(gh issue list:*)",
+      "Bash(npm run:*)",
+      "Bash(touch:*)"
     ],
     "deny": [],
     "ask": []

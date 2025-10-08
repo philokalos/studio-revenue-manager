@@ -13,11 +13,11 @@
     "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
+    "date-fns": "^2.30.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.0",
+    "react-router-dom": "^6.30.1",
     "recharts": "^2.10.0",
-    "date-fns": "^2.30.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

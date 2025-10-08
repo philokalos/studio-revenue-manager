@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 /**
  * 시간대 구분
- * DAY: 08:00-20:00
- * NIGHT: 20:00-08:00
+ * DAY: 08:00-22:00
+ * NIGHT: 22:00-08:00
  */
 export enum TimeBand {
   DAY = 'DAY',
@@ -119,21 +119,25 @@ export interface QuoteResult {
 
 /**
  * 기본 요금표
+ * 30분 슬롯 기준
+ * - 시간당 요금: DAY 40,000원/시간 (3명 기준), NIGHT 25,000원/시간 (3명 기준)
+ * - 30분당: DAY 20,000원, NIGHT 12,500원
+ * - 추가 인원(4명 이상): +10,000원/명
  */
 export const DEFAULT_PRICING: PricingRule[] = [
-  // DAY (08:00-20:00)
-  { band: TimeBand.DAY, headcount: 1, pricePerSlot: 6000 },
-  { band: TimeBand.DAY, headcount: 2, pricePerSlot: 7000 },
-  { band: TimeBand.DAY, headcount: 3, pricePerSlot: 8000 },
-  { band: TimeBand.DAY, headcount: 4, pricePerSlot: 9000 },
-  { band: TimeBand.DAY, headcount: 5, pricePerSlot: 10000 },
+  // DAY (08:00-22:00) - 3명 기준 20,000원/30분 (40,000원/시간)
+  { band: TimeBand.DAY, headcount: 1, pricePerSlot: 20000 },
+  { band: TimeBand.DAY, headcount: 2, pricePerSlot: 20000 },
+  { band: TimeBand.DAY, headcount: 3, pricePerSlot: 20000 },
+  { band: TimeBand.DAY, headcount: 4, pricePerSlot: 20000 },
+  { band: TimeBand.DAY, headcount: 5, pricePerSlot: 20000 },
 
-  // NIGHT (20:00-08:00)
-  { band: TimeBand.NIGHT, headcount: 1, pricePerSlot: 8000 },
-  { band: TimeBand.NIGHT, headcount: 2, pricePerSlot: 10000 },
-  { band: TimeBand.NIGHT, headcount: 3, pricePerSlot: 12000 },
-  { band: TimeBand.NIGHT, headcount: 4, pricePerSlot: 14000 },
-  { band: TimeBand.NIGHT, headcount: 5, pricePerSlot: 16000 },
+  // NIGHT (22:00-08:00) - 3명 기준 12,500원/30분 (25,000원/시간)
+  { band: TimeBand.NIGHT, headcount: 1, pricePerSlot: 12500 },
+  { band: TimeBand.NIGHT, headcount: 2, pricePerSlot: 12500 },
+  { band: TimeBand.NIGHT, headcount: 3, pricePerSlot: 12500 },
+  { band: TimeBand.NIGHT, headcount: 4, pricePerSlot: 12500 },
+  { band: TimeBand.NIGHT, headcount: 5, pricePerSlot: 12500 },
 ];
 
 /**

@@ -20,9 +20,7 @@ export function validateQuoteInput(input: QuoteInput): void {
   // 3. 최소 예약 시간 검증 (2시간)
   const duration = differenceInMinutes(input.endTime, input.startTime);
   if (duration < MIN_RESERVATION_MINUTES) {
-    throw new Error(
-      `Minimum reservation time is ${MIN_RESERVATION_MINUTES} minutes (${MIN_RESERVATION_MINUTES / 60} hours)`
-    );
+    throw new Error(`최소 2시간 이상 예약해야 합니다.`);
   }
 
   // 4. 인원 변경 검증

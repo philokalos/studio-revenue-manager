@@ -3,19 +3,19 @@ import { TimeBand, TimeSlot, SLOT_DURATION_MINUTES } from './types';
 
 /**
  * 주어진 시각이 어느 시간대에 속하는지 판단
- * DAY: 08:00-20:00
- * NIGHT: 20:00-08:00
+ * DAY: 08:00-22:00
+ * NIGHT: 22:00-08:00
  */
 export function getTimeBand(date: Date): TimeBand {
   const hours = date.getHours();
-  return hours >= 8 && hours < 20 ? TimeBand.DAY : TimeBand.NIGHT;
+  return hours >= 8 && hours < 22 ? TimeBand.DAY : TimeBand.NIGHT;
 }
 
 /**
  * 시간대가 바뀌는 경계 시각 찾기
  * @param start 시작 시각
  * @param end 종료 시각
- * @returns 경계 시각 배열 (DAY→NIGHT: 20:00, NIGHT→DAY: 08:00)
+ * @returns 경계 시각 배열 (DAY→NIGHT: 22:00, NIGHT→DAY: 08:00)
  */
 export function findTimeBandBoundaries(start: Date, end: Date): Date[] {
   const boundaries: Date[] = [];
@@ -34,7 +34,7 @@ export function findTimeBandBoundaries(start: Date, end: Date): Date[] {
 
 /**
  * 다음 시간대 경계 시각 계산
- * 현재 DAY → 20:00 반환
+ * 현재 DAY → 22:00 반환
  * 현재 NIGHT → 08:00 반환
  */
 function getNextBoundary(date: Date): Date {
@@ -44,9 +44,9 @@ function getNextBoundary(date: Date): Date {
   boundary.setSeconds(0);
   boundary.setMilliseconds(0);
 
-  if (hours >= 8 && hours < 20) {
-    // DAY → NIGHT (20:00)
-    boundary.setHours(20);
+  if (hours >= 8 && hours < 22) {
+    // DAY → NIGHT (22:00)
+    boundary.setHours(22);
     if (isBefore(boundary, date) || boundary.getTime() === date.getTime()) {
       boundary.setDate(boundary.getDate() + 1);
     }

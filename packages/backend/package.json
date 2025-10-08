@@ -12,9 +12,9 @@
     "test:watch": "vitest --watch",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts",
-    "db:reset": "tsx src/db/reset.ts"
+    "db:migrate": "tsx db/migrate.ts",
+    "db:seed": "tsx db/seed.ts",
+    "db:reset": "tsx db/reset.ts"
   },
   "dependencies": {
     "express": "^4.18.2",
