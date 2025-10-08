@@ -1,0 +1,148 @@
+.sales-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.upload-section {
+  margin-bottom: 2rem;
+}
+
+.upload-card {
+  background: white;
+  padding: 3rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  border: 2px dashed #e0e0e0;
+  transition: border-color 0.2s;
+}
+
+.upload-card:hover {
+  border-color: #1976d2;
+}
+
+.upload-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.upload-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.upload-card p {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.matching-section,
+.sales-list-section {
+  margin-bottom: 2rem;
+}
+
+.matching-section h2,
+.sales-list-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+}
+
+.matching-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.sales-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sales-table thead {
+  background-color: #f5f5f5;
+}
+
+.sales-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #666;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.sales-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.empty-row td {
+  padding: 3rem;
+}
+
+.empty-state {
+  text-align: center;
+  color: #999;
+  font-size: 0.875rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .upload-card,
+  .matching-card,
+  .table-container {
+    background: #2c2c2c;
+  }
+
+  .upload-card {
+    border-color: #404040;
+  }
+
+  .upload-card h3,
+  .matching-section h2,
+  .sales-list-section h2 {
+    color: #ffffff;
+  }
+
+  .upload-card p {
+    color: #aaa;
+  }
+
+  .sales-table thead {
+    background-color: #3a3a3a;
+  }
+
+  .sales-table th {
+    color: #aaa;
+    border-bottom-color: #404040;
+  }
+
+  .sales-table td {
+    border-bottom-color: #404040;
+  }
+}
+
+@media (max-width: 768px) {
+  .upload-card {
+    padding: 2rem;
+  }
+
+  .sales-table {
+    font-size: 0.875rem;
+  }
+
+  .sales-table th,
+  .sales-table td {
+    padding: 0.75rem 0.5rem;
+  }
+}
