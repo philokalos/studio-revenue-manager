@@ -5,3 +5,7 @@
  */
 
 export * from './types';
+export * from './pricing';
+export * from './segmentation';
+export * from './discount';
+export * from './validation';
