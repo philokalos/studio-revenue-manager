@@ -1,0 +1,20 @@
+{
+  "name": "firestore-migrations",
+  "version": "1.0.0",
+  "description": "PostgreSQL to Firestore migration scripts",
+  "scripts": {
+    "migrate": "ts-node migrate-postgresql-to-firestore.ts",
+    "seed": "ts-node seed-firestore.ts"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "pg": "^8.11.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.10.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}
