@@ -2,11 +2,147 @@
 
 ## Overview
 
-This repository uses GitHub Actions for automated testing and deployment. The workflows are designed for a monorepo structure with separate workflows for backend and frontend packages.
+This repository uses GitHub Actions for automated testing and deployment to Firebase. The workflows are designed for a monorepo structure with separate workflows for Firebase Functions (backend) and Firebase Hosting (frontend).
 
 ## Workflow Files
 
-### 1. test.yml - Backend Testing Pipeline
+### Firebase CI/CD Workflows (Phase 4)
+
+#### 1. frontend-test.yml - Frontend Testing Pipeline
+
+**File**: `.github/workflows/frontend-test.yml`
+
+**Purpose**: Automated testing, linting, and type-checking for the React frontend
+
+**Triggers**:
+- Push to `main` branch
+- Pull requests targeting `main` branch
+- Only when changes are made to `packages/frontend/**`
+
+**Jobs**:
+- **test**: Runs on Ubuntu Latest with Node.js 20.x
+  - Checkout code
+  - Setup Node.js with npm caching
+  - Cache dependencies with `actions/cache@v3`
+  - Install dependencies (`npm ci`)
+  - Run linter (`npm run lint`)
+  - Run type check (`npm run type-check`)
+  - Run tests with coverage (`npm test -- --coverage --watchAll=false`)
+  - Build frontend (`npm run build`)
+  - Upload coverage reports (30 days retention)
+  - Upload build artifacts (7 days retention)
+
+**Working Directory**: `packages/frontend`
+
+**Environment Variables**:
+- `CI=true` for test optimization
+
+---
+
+#### 2. functions-test.yml - Firebase Functions Testing Pipeline
+
+**File**: `.github/workflows/functions-test.yml`
+
+**Purpose**: Automated testing, linting, and building for Firebase Functions
+
+**Triggers**:
+- Push to `main` branch
+- Pull requests targeting `main` branch
+- Only when changes are made to `functions/**`
+
+**Jobs**:
+- **test**: Runs on Ubuntu Latest with Node.js 20.x
+  - Checkout code
+  - Setup Node.js with npm caching
+  - Cache dependencies with `actions/cache@v3`
+  - Install dependencies (`npm ci`)
+  - Run linter (`npm run lint`)
+  - Build functions (`npm run build`)
+  - Run tests with coverage (`npm test -- --coverage`)
+  - Upload coverage reports (30 days retention)
+  - Upload build artifacts (7 days retention)
+
+**Working Directory**: `functions`
+
+**Environment Variables**:
+- `CI=true` for test optimization
+- `FIRESTORE_EMULATOR_HOST=localhost:8080`
+- `FIREBASE_AUTH_EMULATOR_HOST=localhost:9099`
+
+---
+
+#### 3. deploy-frontend.yml - Firebase Hosting Deployment
+
+**File**: `.github/workflows/deploy-frontend.yml`
+
+**Purpose**: Deploy frontend to Firebase Hosting
+
+**Triggers**:
+- Push to `main` branch only
+- Only when changes are made to `packages/frontend/**`
+
+**Jobs**:
+- **deploy**: Deploy to Firebase Hosting
+  - Checkout code
+  - Setup Node.js 20.x with npm caching
+  - Cache dependencies
+  - Install dependencies (`npm ci`)
+  - Build frontend for production (`npm run build`)
+  - Install Firebase CLI globally
+  - Deploy to Firebase Hosting using `FIREBASE_TOKEN`
+  - Generate deployment summary
+
+**Working Directory**: `packages/frontend`
+
+**Environment Variables**:
+- `CI=true`
+- `NODE_ENV=production`
+
+**Required GitHub Secrets**:
+- `FIREBASE_TOKEN`: Firebase CLI token (obtain with `firebase login:ci`)
+
+---
+
+#### 4. deploy-functions.yml - Firebase Functions Deployment
+
+**File**: `.github/workflows/deploy-functions.yml`
+
+**Purpose**: Deploy backend functions to Firebase Functions
+
+**Triggers**:
+- Push to `main` branch only
+- Only when changes are made to `functions/**`
+
+**Jobs**:
+- **deploy**: Deploy to Firebase Functions
+  - Checkout code
+  - Setup Node.js 20.x with npm caching
+  - Cache dependencies
+  - Install dependencies (`npm ci`)
+  - Run linter (`npm run lint`)
+  - Build functions (`npm run build`)
+  - Run tests (`npm test`)
+  - Setup Firebase service account credentials
+  - Install Firebase CLI globally
+  - Deploy to Firebase Functions using `FIREBASE_TOKEN`
+  - Cleanup service account file
+  - Generate deployment summary
+
+**Working Directory**: `functions`
+
+**Environment Variables**:
+- `CI=true`
+- `GOOGLE_APPLICATION_CREDENTIALS`: Path to service account JSON
+
+**Required GitHub Secrets**:
+- `FIREBASE_TOKEN`: Firebase CLI token (obtain with `firebase login:ci`)
+- `FIREBASE_SERVICE_ACCOUNT`: Firebase service account JSON (base64 encoded)
+
+---
+
+### Legacy Workflows (Pre-Firebase Migration)
+
+#### 1. test.yml - Backend Testing Pipeline
 
 **File**: `.github/workflows/test.yml`
 
@@ -127,7 +263,67 @@ The following scripts are configured and used by the CI/CD pipeline:
 
 ## CI/CD Workflow Execution Flow
 
-### On Push to `develop` or `main`
+### Firebase CI/CD Flow (Phase 4)
+
+#### On Push to `main` (Production Deployment)
+
+```
+┌─────────────────────────────────────────────┐
+│  Code pushed to main branch                 │
+└────────────┬────────────────────────────────┘
+             │
+             ├──> frontend-test.yml (if frontend changes)
+             │    ├─ Lint & Type Check
+             │    ├─ Run Tests with Coverage
+             │    ├─ Build Frontend
+             │    └─ Upload Artifacts
+             │
+             ├──> functions-test.yml (if functions changes)
+             │    ├─ Lint
+             │    ├─ Build Functions
+             │    ├─ Run Tests with Coverage
+             │    └─ Upload Artifacts
+             │
+             ├──> deploy-frontend.yml (if frontend changes)
+             │    ├─ Build Production Frontend
+             │    ├─ Install Firebase CLI
+             │    └─ Deploy to Firebase Hosting
+             │
+             └──> deploy-functions.yml (if functions changes)
+                  ├─ Run Quality Checks
+                  ├─ Build & Test Functions
+                  ├─ Setup Service Account
+                  ├─ Install Firebase CLI
+                  └─ Deploy to Firebase Functions
+```
+
+#### On Pull Request
+
+```
+┌─────────────────────────────────────────────┐
+│  PR created/updated                         │
+└────────────┬────────────────────────────────┘
+             │
+             ├──> frontend-test.yml (if frontend changes)
+             │    ├─ Run all frontend tests
+             │    ├─ Verify build succeeds
+             │    └─ Upload coverage report
+             │
+             └──> functions-test.yml (if functions changes)
+                  ├─ Run all function tests
+                  ├─ Verify build succeeds
+                  └─ Upload coverage report
+```
+
+**Path-Based Triggering**: Workflows only run when relevant files change:
+- `frontend-test.yml` / `deploy-frontend.yml`: `packages/frontend/**`
+- `functions-test.yml` / `deploy-functions.yml`: `functions/**`
+
+---
+
+### Legacy CI/CD Flow (Pre-Firebase)
+
+#### On Push to `develop` or `main`
 
 ```
 ┌─────────────────────────────────────┐
@@ -143,7 +339,7 @@ The following scripts are configured and used by the CI/CD pipeline:
                   └─ Build Check
 ```
 
-### On Push to `main` (Production)
+#### On Push to `main` (Production)
 
 ```
 ┌─────────────────────────────────────┐
@@ -161,7 +357,7 @@ The following scripts are configured and used by the CI/CD pipeline:
                   └─ Build verification
 ```
 
-### On Pull Request
+#### On Pull Request
 
 ```
 ┌─────────────────────────────────────┐
@@ -211,9 +407,34 @@ act -n
 
 ## Configuration Requirements
 
-### Required GitHub Secrets (when deploying)
+### Required GitHub Secrets
 
-Depending on your deployment method, configure the following secrets in GitHub repository settings:
+Configure these secrets in your GitHub repository settings (Settings → Secrets and variables → Actions):
+
+#### Firebase Deployment Secrets (Required)
+
+**`FIREBASE_TOKEN`**
+- **Purpose**: Authenticates Firebase CLI for deployments
+- **How to obtain**:
+  ```bash
+  firebase login:ci
+  ```
+- **Used in**: `deploy-frontend.yml`, `deploy-functions.yml`
+
+**`FIREBASE_SERVICE_ACCOUNT`**
+- **Purpose**: Service account credentials for Firebase Functions deployment
+- **How to obtain**:
+  1. Go to [Firebase Console](https://console.firebase.google.com/)
+  2. Select your project
+  3. Go to Project Settings → Service Accounts
+  4. Click "Generate New Private Key"
+  5. Save the JSON file
+  6. Add the entire JSON content as the secret value
+- **Used in**: `deploy-functions.yml`
+
+---
+
+### Legacy Deployment Secrets (Pre-Firebase)
 
 #### For Railway Deployment
 - `RAILWAY_TOKEN`: Railway API token
@@ -233,9 +454,58 @@ Depending on your deployment method, configure the following secrets in GitHub r
 
 ---
 
-## Enabling Deployment
+## Setting Up Firebase Deployment
 
-To enable actual deployment, uncomment the relevant sections in `deploy-backend.yml`:
+### Prerequisites
+
+1. **Firebase Project**: Ensure your Firebase project is created and configured
+2. **Firebase CLI**: Install locally for testing:
+   ```bash
+   npm install -g firebase-tools
+   firebase login
+   ```
+
+### Step-by-Step Setup
+
+#### 1. Generate Firebase Token
+
+```bash
+# Login and generate CI token
+firebase login:ci
+
+# Copy the token that appears - you'll need it for GitHub Secrets
+```
+
+#### 2. Generate Service Account Key
+
+1. Visit [Firebase Console](https://console.firebase.google.com/)
+2. Select your project
+3. Go to **Project Settings** → **Service Accounts**
+4. Click **Generate New Private Key**
+5. Download the JSON file
+6. Copy the entire JSON content
+
+#### 3. Add GitHub Secrets
+
+Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions**:
+
+1. Click **New repository secret**
+2. Add `FIREBASE_TOKEN`:
+   - Name: `FIREBASE_TOKEN`
+   - Value: [paste the token from step 1]
+3. Add `FIREBASE_SERVICE_ACCOUNT`:
+   - Name: `FIREBASE_SERVICE_ACCOUNT`
+   - Value: [paste the entire JSON from step 2]
+
+#### 4. Verify Configuration
+
+Push a commit to `main` branch and check the Actions tab to verify workflows run successfully.
+
+---
+
+## Enabling Legacy Deployment (Pre-Firebase)
+
+To enable legacy deployment methods, uncomment the relevant sections in `deploy-backend.yml`:
 
 1. Choose your deployment method
 2. Configure required GitHub secrets

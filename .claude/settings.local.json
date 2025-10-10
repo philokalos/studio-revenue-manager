@@ -48,7 +48,9 @@
       "Bash(tsx:*)",
       "Bash(npx tsx:*)",
       "Bash(find:*)",
-      "Bash(firebase init:*)"
+      "Bash(firebase init:*)",
+      "Bash(./scripts/verify-hosting.sh:*)",
+      "Bash(.github/workflows/verify-workflows.sh)"
     ],
     "deny": [],
     "ask": []

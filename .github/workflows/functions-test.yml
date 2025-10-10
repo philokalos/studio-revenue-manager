@@ -1,25 +1,25 @@
-name: Frontend Tests
+name: Functions Tests
 
 on:
   push:
     branches: [main]
     paths:
-      - 'packages/frontend/**'
-      - '.github/workflows/frontend-test.yml'
+      - 'functions/**'
+      - '.github/workflows/functions-test.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'packages/frontend/**'
-      - '.github/workflows/frontend-test.yml'
+      - 'functions/**'
+      - '.github/workflows/functions-test.yml'
 
 jobs:
   test:
-    name: Test Frontend
+    name: Test Firebase Functions
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: packages/frontend
+        working-directory: functions
 
     strategy:
       matrix:
@@ -29,20 +29,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20.x
           cache: 'npm'
-          cache-dependency-path: packages/frontend/package-lock.json
+          cache-dependency-path: functions/package-lock.json
 
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
-          path: packages/frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('packages/frontend/package-lock.json') }}
+          path: functions/node_modules
+          key: node-modules-functions
           restore-keys: |
-            ${{ runner.os }}-node-
+            node-modules-
 
       - name: Install dependencies
         run: npm ci
@@ -51,29 +51,28 @@ jobs:
         run: npm run lint
         continue-on-error: false
 
-      - name: Run type check
-        run: npm run type-check
+      - name: Build functions
+        run: npm run build
         continue-on-error: false
 
       - name: Run tests
-        run: npm test -- --coverage --watchAll=false
+        run: npm test -- --coverage
         env:
           CI: true
-
-      - name: Build frontend
-        run: npm run build
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-report
-          path: packages/frontend/coverage
+          name: functions-coverage-report
+          path: functions/coverage
           retention-days: 30
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
-          path: packages/frontend/dist
+          name: functions-build
+          path: functions/lib
           retention-days: 7
