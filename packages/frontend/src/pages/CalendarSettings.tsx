@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { calendarApi } from '../api/calendar';
-import { CalendarTokens } from '../types/calendar';
+import type { CalendarTokens } from '../types/calendar';
 
 const STORAGE_KEY = 'google_calendar_tokens';
 

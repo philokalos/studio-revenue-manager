@@ -84,7 +84,7 @@ export default function PaymentStatus() {
                     labelLine={false}
                     label={(entry) => {
                       const name = entry.name || '';
-                      const percent = entry.percent || 0;
+                      const percent = Number(entry.percent) || 0;
                       return `${name} ${(percent * 100).toFixed(0)}%`;
                     }}
                     outerRadius={80}
@@ -124,8 +124,8 @@ export default function PaymentStatus() {
                     <div className="font-bold text-gray-800">{method.value}</div>
                     <div className="text-xs text-gray-500">
                       {(
-                        (method.value /
-                          paymentMethodData.reduce((sum, m) => sum + m.value, 0)) *
+                        (Number(method.value) /
+                          Number(paymentMethodData.reduce((sum, m) => sum + Number(m.value), 0))) *
                         100
                       ).toFixed(1)}
                       %

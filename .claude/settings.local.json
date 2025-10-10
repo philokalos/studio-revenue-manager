@@ -46,7 +46,8 @@
       "Bash(npx shadcn@latest add:*)",
       "Bash(npm test:*)",
       "Bash(tsx:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { calendarApi } from '../api/calendar';
-import { SyncHistoryRecord, SyncDirection, SyncStatus } from '../types/calendar';
+import type { SyncHistoryRecord } from '../types/calendar';
+import { SyncDirection, SyncStatus } from '../types/calendar';
 
 interface SyncHistoryProps {
   reservationId?: number;

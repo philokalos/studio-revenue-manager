@@ -15,16 +15,20 @@ export interface CalendarOAuthResponse {
   email?: string;
 }
 
-export enum SyncDirection {
-  TO_CALENDAR = 'TO_CALENDAR',
-  FROM_CALENDAR = 'FROM_CALENDAR'
-}
+export const SyncDirection = {
+  TO_CALENDAR: 'TO_CALENDAR',
+  FROM_CALENDAR: 'FROM_CALENDAR'
+} as const;
 
-export enum SyncStatus {
-  SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED',
-  PENDING = 'PENDING'
-}
+export type SyncDirection = typeof SyncDirection[keyof typeof SyncDirection];
+
+export const SyncStatus = {
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  PENDING: 'PENDING'
+} as const;
+
+export type SyncStatus = typeof SyncStatus[keyof typeof SyncStatus];
 
 export interface SyncHistoryRecord {
   id: number;

@@ -1,192 +1,294 @@
-# Studio Morph 매출 관리 시스템
+# Studio Revenue Manager
 
-Studio Morph의 예약, 매출, 비용, 목표를 통합 관리하는 웹 서비스입니다.
+**Studio Morph 매출 관리 시스템** - Professional revenue, reservation, and expense management system for studio operations.
 
-## 📋 프로젝트 개요
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
 
-- **목적**: 연습실 운영 매출 관리 효율화
-- **주요 기능**: 예약 관리, 요금 계산, 매출 추적, 대시보드
-- **기술 스택**: React 18 + Express + PostgreSQL + TypeScript
-- **아키텍처**: Monorepo (npm workspaces)
+## Overview
 
-## 🏗️ 프로젝트 구조
+Studio Revenue Manager is a comprehensive web-based system designed to streamline revenue management for studio operations. It integrates reservation management, automated pricing calculations, revenue tracking, and expense management into a single, efficient platform.
+
+### Key Features
+
+- **Automated Pricing Engine**: 30-minute time slicing with DAY/NIGHT rate differentiation
+- **Google Calendar Integration**: Automatic reservation synchronization
+- **Revenue Matching**: Intelligent bank transaction CSV upload and matching
+- **Expense Tracking**: Fixed and variable cost management with monthly goals
+- **Dashboard Analytics**: Real-time revenue, costs, profit, and utilization metrics
+- **Multi-tier Testing**: Unit, integration, and E2E test coverage
+
+## Technology Stack
+
+### Backend
+- **Runtime**: Node.js 18+
+- **Framework**: Express.js with TypeScript
+- **Database**: PostgreSQL 15
+- **Authentication**: JWT with bcrypt
+- **API Documentation**: Swagger/OpenAPI
+- **Testing**: Vitest
+- **Logging**: Winston with daily rotation
+
+### Frontend
+- **Framework**: React 19
+- **Build Tool**: Vite
+- **UI Components**: Radix UI + Tailwind CSS
+- **State Management**: TanStack Query (React Query)
+- **Routing**: React Router v7
+- **Charts**: Recharts
+- **Forms**: React Hook Form
+
+### Shared
+- **Monorepo**: npm workspaces
+- **Language**: TypeScript 5.3+
+- **Validation**: Zod schemas
+- **Date Handling**: date-fns with timezone support
+
+## Project Structure
 
 ```
 studio-revenue-manager/
 ├── packages/
-│   ├── backend/          # Express API 서버
-│   ├── frontend/         # React 웹 애플리케이션
-│   └── shared-pricing/   # 공용 요금 계산 엔진
+│   ├── backend/              # Express API server
+│   │   ├── src/
+│   │   │   ├── routes/       # API routes
+│   │   │   ├── middleware/   # Express middleware
+│   │   │   ├── db/          # Database migrations & queries
+│   │   │   ├── utils/       # Helper functions
+│   │   │   └── config/      # Configuration files
+│   │   └── __tests__/       # Test suites
+│   ├── frontend/            # React web application
+│   │   ├── src/
+│   │   │   ├── components/  # Reusable components
+│   │   │   ├── pages/       # Route pages
+│   │   │   ├── hooks/       # Custom React hooks
+│   │   │   ├── api/         # API client
+│   │   │   └── lib/         # Utilities
+│   │   └── public/          # Static assets
+│   └── shared-pricing/      # Shared pricing calculation engine
+├── docs/                    # Documentation
+│   ├── QUICKSTART.md       # Quick start guide
+│   ├── DEPLOYMENT.md       # Deployment instructions
+│   ├── API_EXAMPLES.md     # API usage examples
+│   ├── ARCHITECTURE.md     # System architecture
+│   └── TROUBLESHOOTING.md  # Common issues & solutions
 ├── .github/
-│   ├── workflows/        # CI/CD 워크플로우
-│   └── issue-templates/  # Issue 템플릿
-├── docs/                 # 설계 문서 (PRD, TRD, ERD 등)
-└── ROADMAP.md           # 개발 로드맵
+│   └── workflows/          # CI/CD pipelines
+├── docker-compose.yml      # Docker orchestration
+└── package.json            # Root workspace config
 ```
 
-## 🚀 빠른 시작
+## Quick Start
 
-### 사전 요구사항
+### Prerequisites
 
-- Node.js 18.x 이상
-- PostgreSQL 14 이상
-- npm 9.x 이상
+- Node.js 18.x or higher
+- PostgreSQL 15 or higher
+- npm 9.x or higher
+- Docker & Docker Compose (optional, for containerized setup)
 
-### 설치 및 실행
+### Installation
 
 ```bash
-# 1. 저장소 클론
+# 1. Clone the repository
 git clone https://github.com/philokalos/studio-revenue-manager.git
 cd studio-revenue-manager
 
-# 2. 의존성 설치
+# 2. Install dependencies
 npm install
 
-# 3. 환경변수 설정
+# 3. Configure environment variables
 cp .env.example .env
-# .env 파일을 열어 데이터베이스 URL 등 설정
+# Edit .env with your database credentials and configuration
 
-# 4. 데이터베이스 마이그레이션
+# 4. Setup database
 npm run db:migrate
+npm run db:seed  # Optional: seed with sample data
 
-# 5. 시드 데이터 삽입 (선택)
-npm run db:seed
-
-# 6. 개발 서버 실행
+# 5. Start development servers
 npm run dev
 ```
 
-개발 서버가 실행되면:
+The application will be available at:
 - **Backend API**: http://localhost:3000
+- **API Documentation**: http://localhost:3000/api-docs
 - **Frontend**: http://localhost:5173
 
-## 📦 주요 명령어
-
-### 전체 프로젝트
+### Docker Setup (Alternative)
 
 ```bash
-npm run dev           # 백엔드 + 프론트엔드 동시 실행
-npm run build         # 전체 프로젝트 빌드
-npm test              # 전체 테스트 실행
+# 1. Copy environment files
+cp .env.docker.example .env.docker
+
+# 2. Start all services
+docker-compose up -d
+
+# 3. Run migrations
+docker-compose exec backend npm run db:migrate
 ```
 
-### 백엔드
+## Development
+
+### Available Commands
 
 ```bash
-npm run dev:backend      # 백엔드 개발 서버 (nodemon)
-npm run build:backend    # 백엔드 빌드
-npm run test:backend     # 백엔드 테스트
-npm run db:migrate       # DB 마이그레이션 실행
-npm run db:seed          # 시드 데이터 삽입
+# Development
+npm run dev              # Run both backend and frontend
+npm run dev:backend      # Run backend only (with hot reload)
+npm run dev:frontend     # Run frontend only (with HMR)
+
+# Build
+npm run build            # Build entire project
+npm run build:backend    # Build backend (TypeScript → JavaScript)
+npm run build:frontend   # Build frontend (Vite production build)
+
+# Testing
+npm test                 # Run all tests
+npm run test:unit        # Run unit tests only
+npm run test:integration # Run integration tests
+npm run test:coverage    # Run tests with coverage report
+
+# Code Quality
+npm run lint             # Run ESLint on all packages
+npm run type-check       # TypeScript type checking
+
+# Database
+npm run db:migrate       # Run database migrations
+npm run db:rollback      # Rollback last migration
+npm run db:seed          # Seed database with sample data
+npm run db:reset         # Reset database (rollback all + migrate + seed)
 ```
 
-### 프론트엔드
+### Testing Strategy
 
-```bash
-npm run dev:frontend     # 프론트엔드 개발 서버 (Vite)
-npm run build:frontend   # 프론트엔드 빌드
-npm run test:frontend    # 프론트엔드 테스트
-```
+- **Unit Tests**: ≥90% coverage for pricing engine and core utilities
+- **Integration Tests**: ≥80% coverage for API endpoints
+- **E2E Tests**: Complete user workflows including authentication, reservations, and revenue matching
 
-### 코드 품질
+## Documentation
 
-```bash
-npm run lint             # ESLint 실행
-npm run type-check       # TypeScript 타입 체크
-```
+- **[Quick Start Guide](docs/QUICKSTART.md)** - Get started in 5 minutes
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
+- **[API Examples](docs/API_EXAMPLES.md)** - Practical API usage examples
+- **[Architecture](docs/ARCHITECTURE.md)** - System design and architecture
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
-## 🧪 테스트
+### Design Documents
 
-```bash
-# 전체 테스트
-npm test
+- **[PRD.md](PRD.md)** - Product Requirements Document
+- **[TRD.md](TRD.md)** - Technical Requirements Document
+- **[ERD.md](ERD.md)** - Entity Relationship Diagram
+- **[API_SPECIFICATION.md](API_SPECIFICATION.md)** - Complete API specification
+- **[PRICING_ENGINE_SPEC.md](PRICING_ENGINE_SPEC.md)** - Pricing engine detailed spec
+- **[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)** - UI design system
+- **[USER_JOURNEY.md](USER_JOURNEY.md)** - User scenarios and workflows
 
-# 단위 테스트만
-npm run test:unit
+## Core Features
 
-# 통합 테스트
-npm run test:integration
+### 1. Pricing Engine
+- 30-minute time slicing for accurate billing
+- DAY (08:00-20:00): 40,000 KRW/hour
+- NIGHT (20:00-08:00): 20,000 KRW/hour
+- Base capacity: 3 people
+- Extra person: 5,000 KRW/hour per person
+- Discount support (percentage or fixed amount)
+- Minimum 2-hour reservation
 
-# E2E 테스트
-npm run test:e2e
+### 2. Reservation Management
+- Google Calendar automatic synchronization
+- Manual reservation creation/editing
+- Price adjustment with memo support
+- Reservation status tracking
+- Conflict detection and validation
 
-# 커버리지 포함 테스트
-npm run test:coverage
-```
+### 3. Revenue Management
+- Bank transaction CSV upload (KakaoBank format)
+- Intelligent matching (time + amount + depositor name)
+- Manual matching override
+- Outstanding and refund tracking
+- Invoice generation and management
 
-**테스트 커버리지 목표**:
-- Unit: ≥90% (특히 pricing engine)
-- Integration: ≥80%
-- E2E: 주요 사용자 플로우 100%
+### 4. Expense & Goal Management
+- Monthly cost input (fixed + variable)
+- Expense categories: rent, utilities, ads, supplies, maintenance
+- Monthly revenue goal setting
+- Achievement rate tracking
+- Rolling 3-month average for utilities
 
-## 📖 설계 문서
+### 5. Dashboard & Analytics
+- Daily/weekly/monthly revenue statistics
+- Cost vs. revenue analysis
+- Goal achievement visualization
+- Utilization rate metrics
+- Export capabilities
 
-프로젝트 설계 문서는 다음 파일들에서 확인할 수 있습니다:
+## Security Features
 
-- **[PRD.md](docs/PRD.md)** - 제품 요구사항 정의서
-- **[TRD.md](docs/TRD.md)** - 기술 요구사항 정의서
-- **[ERD.md](docs/ERD.md)** - 데이터베이스 스키마
-- **[API_SPECIFICATION.md](docs/API_SPECIFICATION.md)** - API 명세서
-- **[PRICING_ENGINE_SPEC.md](docs/PRICING_ENGINE_SPEC.md)** - 요금 계산 엔진 상세 스펙
-- **[TEST_CASES_QA_PLAN.md](docs/TEST_CASES_QA_PLAN.md)** - 테스트 케이스 및 QA 계획
-- **[DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)** - 디자인 시스템
-- **[INFORMATION_ARCHITECTURE.md](docs/INFORMATION_ARCHITECTURE.md)** - 정보 구조
-- **[USER_JOURNEY.md](docs/USER_JOURNEY.md)** - 사용자 시나리오
+- **Environment Variables**: Sensitive data management
+- **Parameterized Queries**: SQL injection prevention
+- **CORS Protection**: Frontend-only access
+- **Rate Limiting**: API abuse prevention
+- **Input Validation**: Zod schema validation
+- **JWT Authentication**: Secure token-based auth
+- **Password Hashing**: bcrypt with salt
+- **Security Headers**: Helmet.js protection
+- **Logging**: Winston with audit trails
 
-## 🗺️ 개발 로드맵
+## Performance
 
-상세한 개발 로드맵 및 이슈 목록은 [ROADMAP.md](ROADMAP.md)를 참조하세요.
+- **Connection Pooling**: Optimized database connections
+- **Query Optimization**: Indexed queries with monitoring
+- **Caching**: Strategic data caching
+- **Performance Monitoring**: Real-time metrics tracking
+- **Health Checks**: Database and system health endpoints
 
-**현재 진행 상황**:
+## Contributing
+
+We welcome contributions! Please follow these guidelines:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow TypeScript best practices
+- Write tests for new features
+- Update documentation as needed
+- Follow the existing code style
+- Run linting and type-checking before commits
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for detailed development roadmap and upcoming features.
+
+**Current Progress**:
 - ✅ Milestone 1: Foundation (Week 1)
 - 🔄 Milestone 2: Core Features (Week 2-3)
 - ⏳ Milestone 3: Integration (Week 4-5)
 - ⏳ Milestone 4: Testing & Polish (Week 6-7)
 
-## 🔑 핵심 기능
+## License
 
-### 1. 요금 계산 엔진
-- 30분 단위 시간 슬라이싱
-- DAY/NIGHT 시간대별 요금 차등
-- 인원 변경 대응
-- 할인 적용 (비율/금액)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### 2. 예약 관리
-- Google Calendar 연동 자동 동기화
-- 수동 예약 생성/수정/삭제
-- 요금 보정 및 메모 관리
+## Support
 
-### 3. 매출 관리
-- 은행 거래 내역 CSV 업로드
-- 자동 매칭 (시간/금액 기반)
-- 수동 매칭 및 매칭 해제
-- 미수/환불 처리
+For issues, questions, or suggestions:
+- **GitHub Issues**: [Create an issue](https://github.com/philokalos/studio-revenue-manager/issues)
+- **Documentation**: Check the [docs](docs/) directory
+- **Email**: Contact the maintainer
 
-### 4. 비용 및 목표 관리
-- 월별 비용 입력 (고정비/변동비)
-- 월별 매출 목표 설정
-- 달성률 추적
+## Acknowledgments
 
-### 5. 대시보드
-- 일/주/월별 매출 통계
-- 비용 대비 수익 분석
-- 목표 달성률 시각화
+- **Maintainer**: philokalos
+- **Framework**: Built with Express.js, React, and PostgreSQL
+- **Community**: Thanks to all contributors and the open-source community
 
-## 🛡️ 보안
+---
 
-- 환경변수로 민감 정보 관리
-- PostgreSQL 파라미터화된 쿼리 (SQL Injection 방지)
-- CORS 설정 (프론트엔드만 허용)
-- 입력 검증 (Zod 스키마)
-
-## 📄 라이선스
-
-MIT License
-
-## 👥 기여자
-
-- **philokalos** - Initial work
-
-## 📞 문의
-
-프로젝트 관련 문의사항은 [GitHub Issues](https://github.com/philokalos/studio-revenue-manager/issues)에 등록해주세요.
+**Made with ❤️ for Studio Morph**
