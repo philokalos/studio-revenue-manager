@@ -1,0 +1,21 @@
+{
+  "projects": {
+    "default": "studio-revenue-manager"
+  },
+  "targets": {
+    "studio-revenue-manager": {
+      "hosting": {
+        "production": [
+          "studio-revenue-manager"
+        ],
+        "staging": [
+          "studio-revenue-manager-staging"
+        ],
+        "development": [
+          "studio-revenue-manager-dev"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

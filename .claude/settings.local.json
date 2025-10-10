@@ -47,7 +47,8 @@
       "Bash(npm test:*)",
       "Bash(tsx:*)",
       "Bash(npx tsx:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(firebase init:*)"
     ],
     "deny": [],
     "ask": []
