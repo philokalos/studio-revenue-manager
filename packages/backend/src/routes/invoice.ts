@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { computeQuote, type QuoteInput, DiscountType } from '@studio-morph/shared-pricing';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
@@ -13,10 +14,80 @@ interface CreateInvoiceRequest {
 }
 
 /**
- * POST /api/invoice/create
- * 예약에 대한 인보이스 생성
+ * @swagger
+ * /api/invoice/create:
+ *   post:
+ *     summary: Create invoice for reservation
+ *     description: Generate an invoice with calculated pricing for a reservation (requires authentication)
+ *     tags: [Invoice]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reservationId
+ *             properties:
+ *               reservationId:
+ *                 type: string
+ *                 format: uuid
+ *               discount:
+ *                 type: object
+ *                 nullable: true
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [rate, amount]
+ *                   value:
+ *                     type: number
+ *     responses:
+ *       200:
+ *         description: Invoice created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     invoiceId:
+ *                       type: string
+ *                       format: uuid
+ *                     finalAmount:
+ *                       type: number
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Reservation not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.post('/create', async (req: Request, res: Response) => {
+router.post('/create', authenticateToken, async (req: Request, res: Response) => {
   const client = await db.connect();
 
   try {
@@ -111,7 +182,7 @@ router.post('/create', async (req: Request, res: Response) => {
         ) VALUES ($1, $2, $3, $4)`,
         [
           invoiceId,
-          'system', // TODO: 실제 사용자 정보로 대체
+          req.user?.id || 'system', // Track 1: Use authenticated user ID
           quote.appliedDiscount.type,
           quote.appliedDiscount.value
         ]
@@ -159,8 +230,99 @@ router.post('/create', async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/invoice/:id
- * 인보이스 조회
+ * @swagger
+ * /api/invoice/{id}:
+ *   get:
+ *     summary: Get invoice details
+ *     description: Retrieve detailed information about a specific invoice including discount logs
+ *     tags: [Invoice]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Invoice ID
+ *     responses:
+ *       200:
+ *         description: Invoice details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     reservationId:
+ *                       type: string
+ *                       format: uuid
+ *                     expectedAmount:
+ *                       type: number
+ *                     discount:
+ *                       type: object
+ *                       nullable: true
+ *                       properties:
+ *                         type:
+ *                           type: string
+ *                         value:
+ *                           type: number
+ *                         amount:
+ *                           type: number
+ *                     finalAmount:
+ *                       type: number
+ *                     status:
+ *                       type: string
+ *                     discountLogs:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           appliedBy:
+ *                             type: string
+ *                           appliedAt:
+ *                             type: string
+ *                             format: date-time
+ *                           type:
+ *                             type: string
+ *                           value:
+ *                             type: number
+ *                     reservation:
+ *                       type: object
+ *                       properties:
+ *                         startAt:
+ *                           type: string
+ *                           format: date-time
+ *                         endAt:
+ *                           type: string
+ *                           format: date-time
+ *                         payerName:
+ *                           type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *       404:
+ *         description: Invoice not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {

@@ -4,12 +4,24 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Database connection configuration
+// Track 2: Production-ready pool settings
 const poolConfig: PoolConfig = {
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+
+  // Pool size configuration
   max: 20, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-  connectionTimeoutMillis: 2000, // How long to wait when connecting a new client
+  min: 2, // Minimum number of clients to keep in pool
+
+  // Timeout configuration
+  idleTimeoutMillis: 30000, // How long a client is allowed to remain idle (30s)
+  connectionTimeoutMillis: 2000, // How long to wait when connecting a new client (2s)
+
+  // Query timeout - prevents long-running queries from blocking
+  statement_timeout: 5000, // 5 seconds max query execution time
+
+  // Application name for monitoring
+  application_name: process.env.APP_NAME || 'studio-revenue-manager',
 };
 
 // Create the connection pool

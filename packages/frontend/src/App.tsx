@@ -1,26 +1,81 @@
-import { Routes, Route } from 'react-router-dom';
-import MainLayout from './layouts/MainLayout';
-import HomePage from './pages/HomePage';
-import ReservationsPage from './pages/ReservationsPage';
-import SalesPage from './pages/SalesPage';
-import DashboardPage from './pages/DashboardPage';
-import CostsPage from './pages/CostsPage';
-import ReportsPage from './pages/ReportsPage';
-import SettingsPage from './pages/SettingsPage';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import QuoteCalculator from './pages/QuoteCalculator';
+import CalendarSettings from './pages/CalendarSettings';
+import CalendarCallback from './pages/CalendarCallback';
+import CalendarDemo from './pages/CalendarDemo';
+import CSVBank from './pages/CSVBank';
+import Reservations from './pages/Reservations';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="reservations" element={<ReservationsPage />} />
-        <Route path="sales" element={<SalesPage />} />
-        <Route path="costs" element={<CostsPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-      </Route>
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/quote"
+              element={
+                <ProtectedRoute>
+                  <QuoteCalculator />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar/settings"
+              element={
+                <ProtectedRoute>
+                  <CalendarSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/calendar/callback" element={<CalendarCallback />} />
+            <Route
+              path="/calendar/demo"
+              element={
+                <ProtectedRoute>
+                  <CalendarDemo />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/csv-bank"
+              element={
+                <ProtectedRoute>
+                  <CSVBank />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reservations"
+              element={
+                <ProtectedRoute>
+                  <Reservations />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

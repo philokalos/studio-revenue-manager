@@ -213,4 +213,472 @@ describe('Pricing Engine - computeQuote', () => {
     expect(Number.isInteger(result.discountAmount)).toBe(true);
     expect(Number.isInteger(result.total)).toBe(true);
   });
+
+  // ====================
+  // Track 3: Edge Cases - Midnight Crossing
+  // ====================
+
+  describe('Midnight Crossing Tests', () => {
+    it('23:00-01:00 (익일) 야간 요금 적용', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T23:00:00+09:00'),
+        endTime: new Date('2024-01-16T01:00:00+09:00'),
+        initialHeadcount: 4,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(120);
+      expect(result.details).toHaveLength(1);
+      expect(result.details[0].band).toBe('NIGHT');
+    });
+
+    it('23:30-00:30 (익일) 30분 단위 정산', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T23:30:00+09:00'),
+        endTime: new Date('2024-01-16T00:30:00+09:00'),
+        initialHeadcount: 3,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(60);
+    });
+
+    it('23:45-02:15 (익일) 다양한 시간대', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T23:45:00+09:00'),
+        endTime: new Date('2024-01-16T02:15:00+09:00'),
+        initialHeadcount: 2,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(150);
+    });
+  });
+
+  // ====================
+  // Track 3: Multi-Day Reservations
+  // ====================
+
+  describe('Multi-Day Reservation Tests', () => {
+    it('24시간 예약 (10:00 → 익일 10:00)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-16T10:00:00+09:00'),
+        initialHeadcount: 3,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(1440); // 24 hours
+      expect(result.details.length).toBeGreaterThan(1);
+    });
+
+    it('48시간 예약 (주말 대여)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-17T10:00:00+09:00'),
+        initialHeadcount: 5,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(2880); // 48 hours
+    });
+
+    it('주간→야간→주간 연속 예약', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T15:00:00+09:00'),
+        endTime: new Date('2024-01-16T12:00:00+09:00'),
+        initialHeadcount: 4,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.details.length).toBeGreaterThan(2);
+      // Should have DAY, NIGHT, DAY segments
+    });
+  });
+
+  // ====================
+  // Track 3: Headcount Changes
+  // ====================
+
+  describe('Complex Headcount Changes', () => {
+    it('3단계 인원 변경 (2→4→6→3)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T18:00:00+09:00'),
+        initialHeadcount: 2,
+        headcountChanges: [
+          { time: new Date('2024-01-15T12:00:00+09:00'), newHeadcount: 4 },
+          { time: new Date('2024-01-15T14:00:00+09:00'), newHeadcount: 6 },
+          { time: new Date('2024-01-15T16:00:00+09:00'), newHeadcount: 3 },
+        ],
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.details.length).toBeGreaterThan(3);
+    });
+
+    it('자정 넘어서 인원 변경', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T22:00:00+09:00'),
+        endTime: new Date('2024-01-16T04:00:00+09:00'),
+        initialHeadcount: 3,
+        headcountChanges: [
+          { time: new Date('2024-01-16T00:00:00+09:00'), newHeadcount: 5 },
+          { time: new Date('2024-01-16T02:00:00+09:00'), newHeadcount: 2 },
+        ],
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(360);
+    });
+
+    it('인원 증가 후 감소', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T16:00:00+09:00'),
+        initialHeadcount: 3,
+        headcountChanges: [
+          { time: new Date('2024-01-15T12:00:00+09:00'), newHeadcount: 7 },
+          { time: new Date('2024-01-15T14:00:00+09:00'), newHeadcount: 2 },
+        ],
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.details.length).toBeGreaterThan(2);
+    });
+  });
+
+  // ====================
+  // Track 3: Discount Edge Cases
+  // ====================
+
+  describe('Discount Edge Cases', () => {
+    it('100% 할인 (무료)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T12:00:00+09:00'),
+        initialHeadcount: 3,
+        discount: {
+          type: DiscountType.PERCENTAGE,
+          value: 100,
+        },
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.total).toBe(0);
+      expect(result.discountAmount).toBe(result.subtotal);
+    });
+
+    it('고정 할인이 총액보다 큰 경우', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T12:00:00+09:00'),
+        initialHeadcount: 2,
+        discount: {
+          type: DiscountType.FIXED,
+          value: 999999,
+        },
+      };
+
+      const result = computeQuote(input);
+
+      // Should cap at subtotal (no negative prices)
+      expect(result.total).toBeGreaterThanOrEqual(0);
+    });
+
+    it('0% 할인 (할인 없음)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T12:00:00+09:00'),
+        initialHeadcount: 3,
+        discount: {
+          type: DiscountType.PERCENTAGE,
+          value: 0,
+        },
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.discountAmount).toBe(0);
+      expect(result.total).toBe(result.subtotal);
+    });
+
+    it('소수점 할인율 (7.5%)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T15:00:00+09:00'),
+        initialHeadcount: 5,
+        discount: {
+          type: DiscountType.PERCENTAGE,
+          value: 7.5,
+        },
+      };
+
+      const result = computeQuote(input);
+
+      expect(Number.isInteger(result.total)).toBe(true);
+      expect(Number.isInteger(result.discountAmount)).toBe(true);
+    });
+  });
+
+  // ====================
+  // Track 3: Time Band Transitions
+  // ====================
+
+  describe('Time Band Transition Tests', () => {
+    it('19:59-20:01 (1분 DAY, 1분 NIGHT)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T19:59:00+09:00'),
+        endTime: new Date('2024-01-15T20:01:00+09:00'),
+        initialHeadcount: 3,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(2);
+    });
+
+    it('19:30-20:30 (DAY-NIGHT 경계)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T19:30:00+09:00'),
+        endTime: new Date('2024-01-15T20:30:00+09:00'),
+        initialHeadcount: 4,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(60);
+      expect(result.details.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('10:00-20:00 (전체 DAY)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T20:00:00+09:00'),
+        initialHeadcount: 5,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(600); // 10 hours
+      expect(result.details[0].band).toBe('DAY');
+    });
+
+    it('20:00-06:00 (전체 NIGHT)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T20:00:00+09:00'),
+        endTime: new Date('2024-01-16T06:00:00+09:00'),
+        initialHeadcount: 3,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(600); // 10 hours
+      expect(result.details[0].band).toBe('NIGHT');
+    });
+  });
+
+  // ====================
+  // Track 3: Minimum/Maximum Validation
+  // ====================
+
+  describe('Boundary Validation Tests', () => {
+    it('정확히 2시간 예약 (최소 시간)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T12:00:00+09:00'),
+        initialHeadcount: 2,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(120);
+      expect(() => computeQuote(input)).not.toThrow();
+    });
+
+    it('1시간 59분 예약 (최소 미달)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T11:59:00+09:00'),
+        initialHeadcount: 2,
+      };
+
+      expect(() => computeQuote(input)).toThrow();
+    });
+
+    it('최소 인원 (1명)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T12:00:00+09:00'),
+        initialHeadcount: 1,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.subtotal).toBeGreaterThan(0);
+    });
+
+    it('최대 인원 (10명)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T12:00:00+09:00'),
+        initialHeadcount: 10,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.subtotal).toBeGreaterThan(0);
+    });
+
+    it('음수 인원 → 에러', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T12:00:00+09:00'),
+        initialHeadcount: -1,
+      };
+
+      expect(() => computeQuote(input)).toThrow();
+    });
+
+    it('0명 → 에러', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T12:00:00+09:00'),
+        initialHeadcount: 0,
+      };
+
+      expect(() => computeQuote(input)).toThrow();
+    });
+  });
+
+  // ====================
+  // Track 3: Real-World Scenarios
+  // ====================
+
+  describe('Real-World Scenario Tests', () => {
+    it('촬영 예약: 오전 9시-오후 6시 (9시간)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T09:00:00+09:00'),
+        endTime: new Date('2024-01-15T18:00:00+09:00'),
+        initialHeadcount: 6,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(540);
+    });
+
+    it('야간 촬영: 저녁 8시-새벽 4시 (8시간)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T20:00:00+09:00'),
+        endTime: new Date('2024-01-16T04:00:00+09:00'),
+        initialHeadcount: 4,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(480);
+      expect(result.details[0].band).toBe('NIGHT');
+    });
+
+    it('주말 장기 대여: 금요일 저녁-일요일 저녁', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-19T18:00:00+09:00'),
+        endTime: new Date('2024-01-21T18:00:00+09:00'),
+        initialHeadcount: 5,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(2880); // 48 hours
+    });
+
+    it('단기 미팅: 정확히 2시간', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T14:00:00+09:00'),
+        endTime: new Date('2024-01-15T16:00:00+09:00'),
+        initialHeadcount: 3,
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.totalMinutes).toBe(120);
+    });
+
+    it('VIP 할인: 30% 할인 적용', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T18:00:00+09:00'),
+        initialHeadcount: 8,
+        discount: {
+          type: DiscountType.PERCENTAGE,
+          value: 30,
+        },
+      };
+
+      const result = computeQuote(input);
+
+      expect(result.discountAmount).toBe(Math.floor(result.subtotal * 0.3));
+    });
+  });
+
+  // ====================
+  // Track 3: Data Consistency
+  // ====================
+
+  describe('Data Consistency Tests', () => {
+    it('동일한 입력 → 동일한 출력 (멱등성)', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T15:00:00+09:00'),
+        initialHeadcount: 4,
+      };
+
+      const result1 = computeQuote(input);
+      const result2 = computeQuote(input);
+
+      expect(result1.total).toBe(result2.total);
+      expect(result1.subtotal).toBe(result2.subtotal);
+      expect(result1.discountAmount).toBe(result2.discountAmount);
+    });
+
+    it('details 합계 = subtotal', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T18:00:00+09:00'),
+        endTime: new Date('2024-01-16T02:00:00+09:00'),
+        initialHeadcount: 5,
+        headcountChanges: [
+          { time: new Date('2024-01-15T22:00:00+09:00'), newHeadcount: 3 },
+        ],
+      };
+
+      const result = computeQuote(input);
+
+      const detailsSum = result.details.reduce((sum, d) => sum + d.amount, 0);
+      expect(detailsSum).toBe(result.subtotal);
+    });
+
+    it('총 시간 = details 시간 합계', () => {
+      const input: QuoteInput = {
+        startTime: new Date('2024-01-15T10:00:00+09:00'),
+        endTime: new Date('2024-01-15T16:00:00+09:00'),
+        initialHeadcount: 4,
+      };
+
+      const result = computeQuote(input);
+
+      const detailsMinutes = result.details.reduce((sum, d) => sum + d.minutes, 0);
+      expect(detailsMinutes).toBe(result.totalMinutes);
+    });
+  });
 });

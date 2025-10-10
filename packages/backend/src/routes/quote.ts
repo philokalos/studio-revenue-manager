@@ -15,8 +15,91 @@ interface CalcQuoteRequest {
 }
 
 /**
- * POST /api/quote/calc
- * 요금 미리보기 계산
+ * @swagger
+ * /api/quote/calc:
+ *   post:
+ *     summary: Calculate quote preview
+ *     description: Calculate pricing quote based on time period, people count, and optional discount
+ *     tags: [Quote]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - startAt
+ *               - endAt
+ *               - people
+ *             properties:
+ *               startAt:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-01-15T10:00:00Z"
+ *               endAt:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-01-15T14:00:00Z"
+ *               people:
+ *                 type: number
+ *                 minimum: 1
+ *                 example: 5
+ *               channel:
+ *                 type: string
+ *                 enum: [default, hourplace, spacecloud]
+ *                 default: default
+ *               discount:
+ *                 type: object
+ *                 nullable: true
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [rate, amount]
+ *                   value:
+ *                     type: number
+ *     responses:
+ *       200:
+ *         description: Quote calculated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     startTime:
+ *                       type: string
+ *                       format: date-time
+ *                     endTime:
+ *                       type: string
+ *                       format: date-time
+ *                     totalMinutes:
+ *                       type: number
+ *                     baseAmount:
+ *                       type: number
+ *                     extraPeopleAmount:
+ *                       type: number
+ *                     discountApplied:
+ *                       type: object
+ *                       nullable: true
+ *                     finalAmount:
+ *                       type: number
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/calc', async (req: Request, res: Response) => {
   try {

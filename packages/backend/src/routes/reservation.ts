@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
@@ -25,10 +26,110 @@ interface UpsertReservationRequest {
 }
 
 /**
- * POST /api/reservation/upsert
- * 예약 생성/수정
+ * @swagger
+ * /api/reservation/upsert:
+ *   post:
+ *     summary: Create or update reservation
+ *     description: Create a new reservation or update an existing one (requires authentication)
+ *     tags: [Reservation]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reservation
+ *             properties:
+ *               reservation:
+ *                 type: object
+ *                 required:
+ *                   - startAt
+ *                   - endAt
+ *                   - people
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     format: uuid
+ *                     description: Reservation ID (for updates only)
+ *                   startAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-01-15T10:00:00Z"
+ *                   endAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-01-15T14:00:00Z"
+ *                   people:
+ *                     type: number
+ *                     minimum: 1
+ *                     example: 5
+ *                   channel:
+ *                     type: string
+ *                     enum: [default, hourplace, spacecloud]
+ *                     default: default
+ *                   notes:
+ *                     type: string
+ *                   googleCalendarEventId:
+ *                     type: string
+ *               meta:
+ *                 type: object
+ *                 properties:
+ *                   payerName:
+ *                     type: string
+ *                   phone:
+ *                     type: string
+ *                   peopleCount:
+ *                     type: number
+ *                   parkingCount:
+ *                     type: number
+ *                   shootingPurpose:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Reservation created/updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     reservationId:
+ *                       type: string
+ *                       format: uuid
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Reservation not found (for updates)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.post('/upsert', async (req: Request, res: Response) => {
+router.post('/upsert', authenticateToken, async (req: Request, res: Response) => {
   const client = await db.connect();
 
   try {
@@ -195,8 +296,96 @@ router.post('/upsert', async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/reservation/:id
- * 예약 조회
+ * @swagger
+ * /api/reservation/{id}:
+ *   get:
+ *     summary: Get reservation details
+ *     description: Retrieve detailed information about a specific reservation
+ *     tags: [Reservation]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Reservation ID
+ *     responses:
+ *       200:
+ *         description: Reservation details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     startAt:
+ *                       type: string
+ *                       format: date-time
+ *                     endAt:
+ *                       type: string
+ *                       format: date-time
+ *                     people:
+ *                       type: number
+ *                     headcountChanges:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     channel:
+ *                       type: string
+ *                       enum: [default, hourplace, spacecloud]
+ *                     status:
+ *                       type: string
+ *                     notes:
+ *                       type: string
+ *                     needsCorrection:
+ *                       type: boolean
+ *                     correctedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       nullable: true
+ *                     googleCalendarEventId:
+ *                       type: string
+ *                       nullable: true
+ *                     meta:
+ *                       type: object
+ *                       properties:
+ *                         payerName:
+ *                           type: string
+ *                         phone:
+ *                           type: string
+ *                         peopleCount:
+ *                           type: number
+ *                         parkingCount:
+ *                           type: number
+ *                         shootingPurpose:
+ *                           type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *       404:
+ *         description: Reservation not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
